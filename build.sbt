@@ -9,9 +9,7 @@ lazy val `try-akka-jackson` =
     .settings(settings)
     .settings(
       libraryDependencies ++= Seq(
-        library.scalaCheck              % Test,
-        library.scalaTest               % Test,
-        library.scalaTestPlusScalaCheck % Test,
+        library.akkaSerializationJackson,
       ),
     )
 
@@ -22,13 +20,9 @@ lazy val `try-akka-jackson` =
 lazy val library =
   new {
     object Version {
-      val scalaCheck              = "1.14.3"
-      val scalaTest               = "3.1.1"
-      val scalaTestPlusScalaCheck = "3.1.1.1"
+      val akka = "2.6.4"
     }
-    val scalaCheck              = "org.scalacheck"    %% "scalacheck"      % Version.scalaCheck
-    val scalaTest               = "org.scalatest"     %% "scalatest"       % Version.scalaTest
-    val scalaTestPlusScalaCheck = "org.scalatestplus" %% "scalacheck-1-14" % Version.scalaTestPlusScalaCheck
+    val akkaSerializationJackson = "com.typesafe.akka" %% "akka-serialization-jackson" % Version.akka
   }
 
 // *****************************************************************************

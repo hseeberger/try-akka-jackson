@@ -18,23 +18,47 @@ package tryakkajackson
 
 import akka.actor.ActorSystem
 import akka.serialization.{ Serialization, SerializationExtension }
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 object Main {
 
   def main(args: Array[String]): Unit = {
     val system        = ActorSystem()
     val serialization = SerializationExtension(system)
-    run(cbor.Foo("bar", 42), serialization)
-    run(json.Foo("bar", 42), serialization)
+
+    useAkkaSerializer(cbor.Foo("bar", 42), serialization)
+    useAkkaSerializer(json.Foo("bar", 42), serialization)
 
     system.terminate()
+    println()
+
+    useJacksonDirectly(cbor.Foo("bar", 42), Some(new CBORFactory()))
+    useJacksonDirectly(json.Foo("bar", 42))
   }
 
-  private def run(o: AnyRef, serialization: Serialization): Unit = {
+  private def useAkkaSerializer(o: AnyRef, serialization: Serialization): Unit = {
     val serializer  = serialization.findSerializerFor(o)
     val id          = serializer.identifier
     val bytes       = serializer.toBinary(o)
     val bytesString = bytes.map(b => f"$b%h").mkString
     println(s"$id: $bytesString")
+  }
+
+  private def useJacksonDirectly(o: AnyRef, factory: Option[JsonFactory] = None) = {
+
+    // This is how Akka is using the Jackson API which results in always using JSON!
+    //val builder = factory.map(new JsonFactoryBuilder(_)).getOrElse(new JsonFactoryBuilder())
+    //val mapper = new ObjectMapper(builder.build())
+
+    // This works as expected!
+    val mapper = factory.map(new ObjectMapper(_)).getOrElse(new ObjectMapper())
+
+    mapper.registerModule(DefaultScalaModule)
+    val bytes       = mapper.writeValueAsBytes(o)
+    val bytesString = bytes.map(b => f"$b%h").mkString
+    println(s"$factory: $bytesString")
   }
 }
